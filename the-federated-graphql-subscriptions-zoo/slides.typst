@@ -20,7 +20,7 @@
     title: talk_title,
     subtitle: [],
     author: [Tom Houlé],
-    date: "2025-  09-08",
+    date: "2025-09-08",
     institution: [Grafbase],
   ),
   config-common(
