@@ -180,7 +180,7 @@ Data returned to the client:
 
 == The problems with Federated Subscriptions
 
-- Lack of transport standardisation led to fragmentation:
+- Lack of transport standardisation has led to fragmentation:
   - WebSockets (HTTP/1.1)
   - SSE (HTTP/2 and 3)
 - Stateful connections impose extra burden on the subgraphs and the gateway
@@ -201,12 +201,19 @@ Data returned to the client:
     - `graphql-ws` / `graphql-transport-ws`
 - And different handshake shapes between each!
   - Headers vs init payload formats
+  // you have to think about just like header forwarding, but separate, and more complicated with the mappings
 
 #pause
 
 #absolute-place(dx: 30%, dy:50%, figure(image("./penpineappleapplepen.png", width: 60%)))
 
-== Subscribe
+== Event queue to gateway
+
+- Two implementations
+  - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[EDFS]
+  - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
+
+== Takeaways
 
 - Pros of traditional federated subscriptions
   - Federate existing GraphQL subgraphs, no need to modify them
@@ -220,11 +227,23 @@ Data returned to the client:
 
 #pause
 
-#text(weight: "bold")[You can mix and match both approaches]
+#align(center)[
+  #text(weight: "bold")[You can mix and match both approaches]
+]
 
 == Conclusion
 
-- Workshop tomorrow ...
+Take care.
+
+== Also
+
+#v(3em)
+
+#text(size: 25pt)[
+#pause Workshop! #pause Tomorrow! #pause
+
+Grote Zaal - 2nd Floor. #pause 10:45am #pause.
+]
 
 = Appendices
 
