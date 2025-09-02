@@ -182,9 +182,15 @@ Data returned to the client:
 
 - Lack of transport standardisation has led to fragmentation:
   - WebSockets (HTTP/1.1)
+    - Subprotocols with protocol negotiation
+      ```
+      Sec-WebSocket-Version: 13
+      Sec-WebSocket-Protocol: graphql-ws, graphql-transport-ws
+      ```
+    - Init payloads are not headers
+    // you have to think about just like header forwarding, but separate, and more complicated with the mappings
   - SSE (HTTP/2 and 3)
-- Stateful connections impose extra burden on the subgraphs and the gateway
-- Connection loss is both more likely and harder to handle
+  - Multipart
 - One connection between the Gateway and the relevant subgraph per subscribed client, even when they all subscribe to the same events
 - Multi-protocol subscriptions
 
@@ -209,6 +215,7 @@ Data returned to the client:
 
 == Event queue to gateway
 
+- The idea: the gateway talks to a message queue (Kafka, NATS, ...), not the subgraphs directly
 - Two implementations
   - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[EDFS]
   - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
@@ -250,7 +257,13 @@ Grote Zaal - 2nd Floor. #pause 10:45am #pause.
 == Links
 
 - WebSockets
+  - #link("https://github.com/apollographql/subscriptions-transport-ws")[subscriptions-transport-ws]
   - #link("https://github.com/enisdenjo/graphql-ws/issues/3")[Issues and security implications with subscriptions-transport-ws]
 - SSE
   - #link("https://github.com/enisdenjo/graphql-sse/blob/master/PROTOCOL.md")[GraphQL-SSE spec]
+- Multipart subscriptions
+  - #link("https://github.com/graphql/graphql-over-http/blob/main/rfcs/IncrementalDelivery.md")[Incremental delivery over HTTP]
+  - #link("https://www.apollographql.com/docs/graphos/routing/operations/subscriptions/multipart-protocol")[Apollo docs]
+- #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
+- #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[Cosmo EDFS]
 - #link("https://www.youtube.com/watch?v=NfuiB52K7X8")[Pen Pineapple Apple Pen]
