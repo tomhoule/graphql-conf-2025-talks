@@ -81,6 +81,12 @@
    GraphQL Subscriptions are beyond the scope of this specification at this time.
 ]
 
+#pause
+
+#align(center)[
+#text(size: 120pt)[😱]
+]
+
 == Subscriptions are actually not that special in Federated GraphQL
 
 #pause
@@ -206,8 +212,9 @@ Data returned to the client:
     - `subscriptions-transport-ws`
     - `graphql-ws` / `graphql-transport-ws`
 - And different handshake shapes between each!
-  - Headers vs init payload formats
+  - Headers vs websocket init payload shapes mismatch
   // you have to think about just like header forwarding, but separate, and more complicated with the mappings
+  // and case sensitivity!
 
 #pause
 
@@ -220,7 +227,62 @@ Data returned to the client:
   - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[EDFS]
   - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
 
+== EDFS
+
+#block[
+#set text(size: 16pt)
+```graphql
+input edfs__NatsStreamConfiguration {
+    consumerInactiveThreshold: Int! = 30
+    consumerName: String!
+    streamName: String!
+}
+
+type PublishEventResult {
+    success: Boolean!
+}
+
+type Query {
+    employeeFromEvent(id: ID!): Employee! @edfs__natsRequest(subject: "getEmployee.{{ args.id }}")
+}
+
+input UpdateEmployeeInput {
+    name: String
+    email: String
+}
+
+type Mutation {
+    updateEmployee(id: ID!, update: UpdateEmployeeInput!): PublishEventResult! @edfs__natsPublish(subject: "updateEmployee.{{ args.id }}")
+}
+
+type Subscription {
+    employeeUpdated(employeeID: ID!): Employee! @edfs__natsSubscribe(subjects: ["employeeUpdated.{{ args.employeeID }}"])
+}
+
+type Employee @key(fields: "id", resolvable: false) {
+  id: Int! @external
+}
+```
+]
+
+== Grafbase extensions
+
+TODO
+
+== Advantages of an extensions-based approach compared to EDFS
+
+- Arbitrary data formats for the messages (not only JSON)
+- Customizable and extensible without touching the Gateway. You can write extensions for other pub/sub systems (Kinesis, etc.).
+- More powerful filters (`jq` expression language)
+- By convention, configuration is usually in your Gateway configuration, not expressed in your subgraph's GraphQL schemas
+
 == Takeaways
+
+#pause
+
+- Federated GraphQL subscriptions require some thinking and planning.
+
+#pause
 
 - Pros of traditional federated subscriptions
   - Federate existing GraphQL subgraphs, no need to modify them
@@ -231,16 +293,13 @@ Data returned to the client:
 - Pros of subscriptions offloaded to a message queue
   - Stream deduplication
   - Non-GraphQL services can publish to subjects directly
+  - Depends on setup, but usually higher performance with less memory usage
 
 #pause
 
 #align(center)[
-  #text(weight: "bold")[You can mix and match both approaches]
+  #text(weight: "bold", size: 28pt)[You can mix and match both approaches]
 ]
-
-== Conclusion
-
-Take care.
 
 == Also
 
@@ -249,7 +308,9 @@ Take care.
 #text(size: 25pt)[
 #pause Workshop! #pause Tomorrow! #pause
 
-Grote Zaal - 2nd Floor. #pause 10:45am #pause.
+Grote Zaal - 2nd Floor. #pause 10:45am.
+
+#pause Thank you!
 ]
 
 = Appendices
