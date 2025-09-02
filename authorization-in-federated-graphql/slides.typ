@@ -1,11 +1,14 @@
 #import "@preview/touying:0.6.1": *
 #import themes.simple: *
 
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+
 // Code blocks
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
 #show: codly-init.with()
-#codly(languages: codly-languages, zebra-fill: none)
+
+#set quote(block: true, quotes: true)
 
 #let talk_title = "Authorization in Federated GraphQL"
 #let grafbase_green = rgb(7, 168, 101)
@@ -40,19 +43,32 @@
   #text(size: 20pt)[Tom Houlé]
 ]
 
-== Outline <touying:hidden>
-
-#components.adaptive-columns(outline(title: none, indent: 1em))
-
-= Federation and Authorization
-
 == Federated GraphQL
 
-Hello, Touying!
-
-#pause
-
-Hello, Typst!
+#v(2em)
+#align(center)[
+#diagram(
+  {
+    let client_a = (0, 0)
+    let client_b = (0, 1)
+    let gateway = (1, 0.5)
+    let subgraph_a = (2, 0)
+    let subgraph_b = (2, 1)
+    let service_a = (2, 2)
+    node(client_a, "Client A")
+    node(client_b, "Client B")
+    node(gateway, "Gateway")
+    node(subgraph_a, "Subgraph A")
+    node(subgraph_b, "Subgraph B")
+    node(service_a, "Service A")
+    edge(client_a, gateway, "->")
+    edge(client_b, gateway, "->")
+    edge(gateway, subgraph_a, "->")
+    edge(gateway, subgraph_b, "->")
+    edge(gateway, service_a, "->")
+  }
+)
+]
 
 == Why Authorize in the Gateway
 
@@ -62,9 +78,43 @@ Hello, Typst!
 #pause
 - Whole request context
 #pause
-- Entity resolvers make things tricky
+- Entity resolvers make subgraphs lose context
 
-==
+== Entity resolvers make subgraphs lose context
+
+#text(size: 18pt)[
+#box(width: 40%, baseline: -50pt)[
+ ```graphql
+ query {
+     currentUser {
+         directMessages {
+             author { name }
+             content
+         }
+     }
+ }
+ ```
+
+]
+#box(baseline: -150pt, width: 8%)[#align(center)[VS]]
+#box(width: 50%)[
+  ```graphql
+  query {
+    _entities(representations: [{ __typename: "User", id: "1" }]) {
+      ... on User {
+        directMessages {
+          author { name }
+          content
+        }
+      }
+    }
+  }
+  ```
+
+]
+]
+
+== Federation v2 Standard Directives
 
 ```graphql
 directive @authenticated on
@@ -75,7 +125,7 @@ directive @authenticated on
   | ENUM
 ```
 
-==
+== Federation v2 Standard Directives
 
 ```graphql
 directive @requiresScopes(scopes: [[federation__Scope!]!]!) on
@@ -86,7 +136,7 @@ directive @requiresScopes(scopes: [[federation__Scope!]!]!) on
   | ENUM
 ```
 
-==
+== Federation v2 Standard Directives
 
 ```graphql
 directive @policy(policies: [[federation__Policy!]!]!) on
