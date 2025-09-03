@@ -1,6 +1,10 @@
 #import "@preview/touying:0.6.1": *
 #import themes.simple: *
 
+// Absolute placement
+#import "@preview/pinit:0.2.2": *
+
+// Diagrams
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 // Code blocks
@@ -45,27 +49,20 @@
 
 == Federated GraphQL
 
-#v(2em)
-#align(center)[
+#align(center + horizon)[
 #diagram(
   {
-    let client_a = (0, 0)
-    let client_b = (0, 1)
-    let gateway = (1, 0.5)
-    let subgraph_a = (2, 0)
-    let subgraph_b = (2, 1)
-    let service_a = (2, 2)
-    node(client_a, "Client A")
-    node(client_b, "Client B")
-    node(gateway, "Gateway")
-    node(subgraph_a, "Subgraph A")
-    node(subgraph_b, "Subgraph B")
-    node(service_a, "Service A")
-    edge(client_a, gateway, "->")
-    edge(client_b, gateway, "->")
-    edge(gateway, subgraph_a, "->")
-    edge(gateway, subgraph_b, "->")
-    edge(gateway, service_a, "->")
+    node((0, 0), "Client A", name: <client_a>)
+    node((0, 1), "Client B", name: <client_b>)
+    node((2, 0.5), "Federation\nGateway", name: <gateway>, stroke: 1pt, inset: 10pt, outset: 10pt)
+    node((4, 0), "Subgraph A", name: <subgraph_a>)
+    node((4, 1), "Subgraph B", name: <subgraph_b>)
+    node((4, 2), "Service A", name: <service_a>, outset: 8pt)
+    edge(<client_a>, <gateway>, "->")
+    edge(<client_b>, <gateway>, "->")
+    edge(<gateway>, <subgraph_a>, "->")
+    edge(<gateway>, <subgraph_b>, "->")
+    edge(<gateway>, <service_a>, "->")
   }
 )
 ]
@@ -86,15 +83,15 @@
 #box(width: 40%, baseline: -20pt)[
  ```graphql
  query {
-     currentUser {
-         friends {
-             profilePictureUrl
-             name
-             photos {
-                 url
-             }
-         }
-     }
+  currentUser {
+    friends {
+      profilePictureUrl
+      name
+      photos {
+        url
+      }
+    }
+  }
  }
  ```
 
@@ -103,13 +100,16 @@
 #box(width: 50%, baseline: -20pt)[
   ```graphql
   query {
-    _entities(representations: [{ __typename: "User", id: "1" }]) {
+    _entities(representations: [
+      { __typename: "User", id: "1" }
+    ]) {
       ... on User {
-          profilePictureUrl
-          name
-          photos {
-              url
-          }
+        profilePictureUrl
+        name
+        photos {
+            url
+        }
+      }
     }
   }
   ```
@@ -196,9 +196,48 @@ type Query {
 #pause
 
 - -> _Relationships_ cannot be enforced
-  - Users can see the photos on the profile of their friends
-  - I can see the balance on my own bank account
-  - I can see the medical records of my own patients
+  - “Users can see the photos on the profile of their friends”
+  - “I can see the balance on my own bank account”
+  - “I can see the medical records of my own patients”
+
+== Example
+
+```graphql
+query PostsWithComments {
+    posts(user: $user) {
+        title
+        comments(includeHidden: true) {
+            author { name }
+            commentText
+            createdAt
+        }
+    }
+}
+```
+
+== <pre-subgraph-request>
+
+#text(size: 20pt)[
+#align(center)[
+#diagram(
+  {
+    let label_size = 0.7em
+    node((0, 1.7), "Client", name: <client_a>, inset: 10pt, outset: 10pt, stroke: 1pt)
+    node((1.8, 1.7), "Gateway", name: <gateway>, inset: 10pt, outset: 5pt, stroke: 1pt)
+    node((4.5, 1), "Posts\nsubgraph", name: <subgraph_a>, inset: 10pt, outset: 5pt, stroke: 1pt)
+    node((4.5, 3), "Comments\nsubgraph", name: <subgraph_b>, inset: 10pt, outset: 10pt, stroke: 1pt)
+    edge(<client_a>, <gateway>, "->", label-size: label_size, label: "1 (request)", bend: 10deg, label-pos: 55%)
+    edge(<gateway>, <subgraph_a>, "->", label-size: label_size, label: "2 (get posts)", bend: 10deg, label-pos: 20%)
+    edge(<subgraph_a>, <gateway>, label-size: label_size, label: "3", "->", bend: +20deg, label-pos: 30%)
+    edge(<gateway>, <subgraph_b>, "->", label-size: label_size, label: "4 (get comments)", label-pos: 70%, bend: 10deg)
+    edge(<subgraph_b>, <gateway>, "->", label-size: label_size, label: "5", bend: 10deg)
+    edge(<gateway>, <client_a>, "->", label-size: label_size, label: "6 (response)", bend: +30deg)
+    edge((0.7, 0), (0.7, 3), "--", label-size: label_size / 1.5, label: "Request level authzn", label-pos: 15%, label-angle: 90deg)
+    edge((3, 0), (3, 3), "--", label-size: label_size / 1.5, label: "Fine grained authzn", label-pos: 15%, label-angle: 90deg)
+  }
+)
+]
+]
 
 == Comprehensive authorization in the Gateway
 
@@ -216,66 +255,171 @@ type Query {
 
 #pause
 
-  - And in some cases in response data too
+  - And response data too
 
-== Comprehensive authorization in the Gateway
+#pause
+
+  - *-> Authorization must be taken into account by the query planner*
+
+== Pre-subgraph request authorization: extensions
+
+- Achieved with _extensions_.
+  - They can define their own directives that will be used by the Gateway for query planning.
+  - Compiled to Wasm (WASI preview 2). Near-native performance, in-process secure sandbox.
+  - They can perform arbitrary IO (but you can restrict that with permissions).
+
+== Pre-subgraph request authorization: define a directive
+
+```graphql
+extend schema
+  @link(
+      url: "https://specs.grafbase.com/grafbase",
+      import: ["InputFieldSet"])
+
+directive @authorized(arguments: InputFieldSet = "*")
+```
+
+== Pre-subgraph request authorization: apply the directive
+
+```graphql
+extend schema
+  @link(
+      url: "https://extensions.grafbase.com/authorized/0.1.0",
+      import: ["@authorized"])
+
+type Query {
+    bankAccountByUserEmail(email: String!): BankAccount @authorized
+}
+```
+
+== Pre-subgraph request authorization: implement authzn logic
+
+#text(size: 14pt)[
+
+```rust
+#[derive(serde::Deserialize)]
+struct Authorized<T> {
+    arguments: T,
+}
+
+#[derive(serde::Deserialize)]
+struct BankAccountByUserEmailArguments {
+    email: String,
+}
+
+fn authorize_query(
+    &mut self,
+    headers: &mut SubgraphHeaders,
+    token: Token,
+    elements: QueryElements<'_>,
+) -> Result<impl IntoQueryAuthorization, ErrorResponse> {
+
+    let mut builder = AuthorizationDecisions::deny_some_builder();
+    for element in elements {
+        let DirectiveSite::FieldDefinition(field) = element.directive_site() else {
+            unreachable!()
+        };
+        match (field.parent_type_name(), field.name()) {
+            ("Query", "user") => {
+                let protect: Authorized<BankAccountByUserEmailArguments> = element.directive_arguments()?;
+                let user_id = protect.arguments.email;
+                if user_id != "george@pizzahut.com" {
+                    builder.deny(element, "Access denied");
+                }
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    Ok(builder.build())
+}
+```
+]
+
+
+== Pre-subgraph request authorization
+
+- Takes place when a subgraph request is planned
+- Will cause the field to become null, with your authorization error in `errors`
+- The field and its subfields will not even be requested from the subgraph
+
+== Response authorization: take 1
 
 ```graphql
 type User @key(fields: "id") {
-    id: ID!
-    email: String!
-    userType: UserType
-    socialSecurityNumber: String @policy(policies: ["check_access_to_user_ssn"])
+  id: ID!
+  email: String!
+  userType: UserType
+  socialSecurityNumber: String @policy(
+    policies: ["check_access_to_user_ssn"]
+  )
 }
 ```
 
 Assume we need the `id` and `userType` of the user in addition to the current request context to control access to the social security number.
 
-== Comprehensive authorization in the Gateway
+== Response authorization: take 1
 
 Looks good, but...
 
 ```graphql
 query {
-    userByEmail(email: "george@pizzahut.com") {
-        socialSecurityNumber
-    }
+  userByEmail(email: "george@pizzahut.com") {
+    socialSecurityNumber
+  }
 }
 ```
 
 The `id` and `userType` fields are not going to be available, so our plugin / coprocessor does not have the data it needs to make authorization decisions.
 
-== Query planner involvement
+== Response authorization: take 2
 
-It sounds like we need `@requires`:
+We define a directive that declaratively pulls in the fields we need in order to make a decision:
 
 ```graphql
+extend schema
+  @link(
+      url: "https://specs.grafbase.com/grafbase",
+      import: ["FieldSet"])
 
+directive @guard(requires: FieldSet!)
 ```
 
-Like require, but _without external_.
+== Response authorization: take 2
 
-- Pass the relevant input data
+Then we apply it:
 
-Realization: we sometimes need more than the requested data to make authorization decisions
+#text(size: 16pt)[
 
 ```graphql
-query {
-  apartments {
-    tenant {
-      socialSecurityNumber
-    }
-  }
+extend schema
+  @link(
+      url: "https://extensions.grafbase.com/authorized/0.1.0",
+      import: ["@guard"])
+
+type User @key(fields: "id") {
+  id: ID!
+  email: String!
+  userType: UserType
+  socialSecurityNumber: String @guard(
+    requires: "id userType { canReadSensitiveInfo }"
+  )
 }
 ```
+]
 
-I'm only allowed to see the social security number on tenants.
+== Takeaways
 
-== Why integration with the query planner matters
-
-- Batching
-
-== ABAC and ReBAC
+- Authorization decision for each annotated field or type can depend on inputs (arguments) or arbitrary associated data on the parent type.
+  - Enables fine-grained authorization, for each set of arguments, and each instance type / field / entity
+#pause
+- Takes authorization into account for subgraph requests:
+  - Avoids requesting what the current client request is not authorized to see
+  - Potentially requests extra fields that are not needed to resolve the GraphQL query, but are required to make authorization decisions.
+#pause
+- All these authorization decisions are batched by the query planner. If you have to call external services to authorize, these calls can be batched as well.
+#pause
+- Enables fine grained Attribute-based Access Control (ABAC) and Relation-based Access Control (ReBAC).
 
 == Also
 
@@ -287,6 +431,13 @@ I'm only allowed to see the social security number on tenants.
 Grote Zaal - 2nd Floor. #pause 10:45am.
 
 #pause Thank you!
+
+#absolute-place(dx: 30%, dy: 70%, figure(image("../grafbase-logo.svg", width: 50%)))
 ]
 
-= Links
+= Appendices
+
+== Links
+
+- #link("https://grafbase.com/blog/custom-authentication-and-authorization-in-graphql-federation")[Blog post: Custom Authentication and Authorization in GraphQL Federation]
+- #link("https://github.com/grafbase/grafbase/tree/main/examples/authorization")[Example project for authorization extensions]

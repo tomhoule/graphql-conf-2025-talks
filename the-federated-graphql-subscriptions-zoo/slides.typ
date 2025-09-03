@@ -311,6 +311,8 @@ TODO
 Grote Zaal - 2nd Floor. #pause 10:45am.
 
 #pause Thank you!
+
+#absolute-place(dx: 30%, dy: 70%, figure(image("../grafbase-logo.svg", width: 50%)))
 ]
 
 = Appendices
