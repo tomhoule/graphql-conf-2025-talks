@@ -4,6 +4,9 @@
 // Absolute placement
 #import "@preview/pinit:0.2.2": *
 
+// Diagrams
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
+
 // Code blocks
 #import "@preview/codly:1.3.0": *
 #import "@preview/codly-languages:0.1.1": *
@@ -30,7 +33,7 @@
   )
 )
 
-#set text(size: 20pt, font: ("Inter"))
+#set text(size: 19pt, font: ("Inter"))
 
 #title-slide[
   #figure(
@@ -43,6 +46,26 @@
   ]
 
   #text(size: 20pt)[Tom Houlé]
+]
+
+== Federated GraphQL
+
+#align(center + horizon)[
+#diagram(
+  {
+    node((0, 0), "Client A", name: <client_a>)
+    node((0, 1), "Client B", name: <client_b>)
+    node((2, 0.5), "Federation\nGateway", name: <gateway>, stroke: 1pt, inset: 10pt, outset: 10pt)
+    node((4, 0), "Subgraph A", name: <subgraph_a>)
+    node((4, 1), "Subgraph B", name: <subgraph_b>)
+    node((4, 2), "Service A", name: <service_a>, outset: 8pt)
+    edge(<client_a>, <gateway>, "->")
+    edge(<client_b>, <gateway>, "->")
+    edge(<gateway>, <subgraph_a>, "->")
+    edge(<gateway>, <subgraph_b>, "->")
+    edge(<gateway>, <service_a>, "->")
+  }
+)
 ]
 
 == Subscriptions are special... in GraphQL
@@ -186,19 +209,24 @@ Data returned to the client:
 
 == The problems with Federated Subscriptions
 
+#text(size: 16pt)[
 - Lack of transport standardisation has led to fragmentation:
+  #pause
   - WebSockets (HTTP/1.1)
     - Subprotocols with protocol negotiation
       ```
       Sec-WebSocket-Version: 13
       Sec-WebSocket-Protocol: graphql-ws, graphql-transport-ws
       ```
+      #pause
     - Init payloads are not headers
     // you have to think about just like header forwarding, but separate, and more complicated with the mappings
+      #pause
   - SSE (HTTP/2 and 3)
-  - Multipart
-- One connection between the Gateway and the relevant subgraph per subscribed client, even when they all subscribe to the same events
+  - Multipart#pause
+- One connection between the Gateway and the relevant subgraph per subscribed client, even when they all subscribe to the same events#pause
 - Multi-protocol subscriptions
+]
 
 == Multi-protocol subscriptions
 
@@ -212,7 +240,13 @@ Data returned to the client:
     - `subscriptions-transport-ws`
     - `graphql-ws` / `graphql-transport-ws`
 - And different handshake shapes between each!
-  - Headers vs websocket init payload shapes mismatch
+  - Headers vs websocket init payload shape mismatch
+  ```typescript
+  interface ConnectionInitMessage {
+    type: 'connection_init';
+    payload?: Record<string, unknown> | null;
+  }
+  ```
   // you have to think about just like header forwarding, but separate, and more complicated with the mappings
   // and case sensitivity!
 
@@ -220,9 +254,10 @@ Data returned to the client:
 
 #absolute-place(dx: 30%, dy:50%, figure(image("./penpineappleapplepen.png", width: 60%)))
 
-== Event queue to gateway
+== Alternative: connect the gateway to a message queue
 
-- The idea: the gateway talks to a message queue (Kafka, NATS, ...), not the subgraphs directly
+- The idea: the GraphQL federation gateway connects to a message queue (Kafka, NATS, ...), not the subgraphs directly
+  - The subgraphs or other services post messages to that queue
 - Two implementations
   - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[EDFS]
   - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
@@ -230,7 +265,9 @@ Data returned to the client:
 == EDFS
 
 #block[
-#set text(size: 16pt)
+#set text(size: 13pt)
+#columns(2)[
+
 ```graphql
 input edfs__NatsStreamConfiguration {
     consumerInactiveThreshold: Int! = 30
@@ -264,10 +301,76 @@ type Employee @key(fields: "id", resolvable: false) {
 }
 ```
 ]
+]
 
-== Grafbase extensions
+== Grafbase Extensions
 
-TODO
+- Pluggable gateway extensions compiled to WebAssembly (WASI preview 2)
+  - They can define their own directives that will be used by the Gateway for query planning
+  - Near-native performance, in-process secure sandbox.
+  - They can perform arbitrary IO (but you can restrict that with permissions).
+  - You use the open source extensions on the Grafbase Marketplace or build your own
+  - They can act as *virtual subgraphs*
+
+==
+
+#columns(2)[
+  #text(size: 12pt)[
+
+```graphql
+extend schema
+  @link(
+    url: "https://specs.grafbase.com/composite-schemas/v1"
+    import: ["@lookup", "@key", "@derive"]
+  )
+  @link(
+    url: "https://extensions.grafbase.com/extensions/nats/0.4.1"
+    import: ["@natsPublish", "@natsSubscription"]
+  )
+
+input SellProductInput {
+  productId: ID!
+  price: Int!
+}
+
+type Mutation {
+  sellProduct(input: SellProductInput!): Boolean!
+    @natsPublish(
+      subject: "productSales",
+      body: { selection: "*" })
+}
+
+type Product @key(fields: "id") {
+  id: ID!
+}
+
+type ProductSale {
+  productId: ID!
+  product: Product! @derive
+  price: Int!
+}
+
+type Subscription {
+  sales(subject: String!): ProductSale
+  @natsSubscription(
+    subject: "{{ args.subject }}"
+    selection: "select(.price > 10)"
+  )
+}
+
+```
+  ]
+]
+
+== Corresponding configuration
+
+```toml
+[extensions.nats]
+version = "0.4.1"
+
+[[extensions.nats.config.endpoint]]
+servers = ["nats://localhost:4222"]
+```
 
 == Advantages of an extensions-based approach compared to EDFS
 
