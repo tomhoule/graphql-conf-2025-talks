@@ -175,7 +175,7 @@ Calls coprocessors or scripts for the given policies. A policy is just a name. T
 type Query {
     adminDashboard: AdminDashboard
         @policy(policies: [
-            ["ip_not_marked_as_potentially_fraudulent"],
+            ["ip_is_allowlisted"],
             ["is_support_agent", "in_business_hours"],
         ])
 }
@@ -189,9 +189,9 @@ type Query {
 
 #pause
 
-- The authorization decisions can however not be tied to the GraphQL query contents
-  - The GraphQL document itself: what fields are requested, and at what paths (example: `User.friends`)
-  - The data passed in: arguments from literals and variables
+- The authorization decisions can however not be tied to the GraphQL query data
+  - Inputs to the fields
+  - Output data returned by the subgraphs
 
 #pause
 
