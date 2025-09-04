@@ -189,16 +189,39 @@ type Query {
 
 #pause
 
-- The authorization decisions can however not be tied to the GraphQL query data
+- But decisions cannot be tied to *data*
   - Inputs to the fields
   - Output data returned by the subgraphs
 
 #pause
 
-- -> _Relationships_ cannot be enforced
+- -> *Relationships* cannot be enforced
   - “Users can see the photos on the profile of their friends”
   - “I can see the balance on my own bank account”
   - “I can see the medical records of my own patients”
+
+  == Comprehensive authorization in the Gateway
+
+  #pause
+
+  - We want to make authorization decisions based on:
+    - Request data
+    ```graphql
+    query {
+        user(id: "user_015f91b8-eb7a-418a-8193-f72ddea5760d") {
+            socialSecurityNumber
+        }
+    }
+    ```
+
+  #pause
+
+    - And response data too
+
+  #pause
+
+    - *-> Authorization must be taken into account by the query planner*
+
 
 == Example
 
@@ -215,7 +238,7 @@ query PostsWithComments {
 }
 ```
 
-== <pre-subgraph-request>
+==
 
 #text(size: 20pt)[
 #align(center)[
@@ -239,34 +262,13 @@ query PostsWithComments {
 ]
 ]
 
-== Comprehensive authorization in the Gateway
-
-#pause
-
-- We want to make authorization decisions based on:
-  - Request data
-  ```graphql
-  query {
-      user(id: "user_015f91b8-eb7a-418a-8193-f72ddea5760d") {
-          socialSecurityNumber
-      }
-  }
-  ```
-
-#pause
-
-  - And response data too
-
-#pause
-
-  - *-> Authorization must be taken into account by the query planner*
-
 == Pre-subgraph request authorization: extensions
 
 - Achieved with _extensions_.
   - They can define their own directives that will be used by the Gateway for query planning.
-  - Compiled to Wasm (WASI preview 2). Near-native performance, in-process secure sandbox.
-  - They can perform arbitrary IO (but you can restrict that with permissions).
+  - Compiled to Wasm (WASI preview 2).
+    - Near-native performance, in-process secure sandbox.
+    - They can perform arbitrary IO (with configurable capabilities).
 
 == Pre-subgraph request authorization: define a directive
 
@@ -410,16 +412,16 @@ type User @key(fields: "id") {
 
 == Takeaways
 
-- Authorization decision for each annotated field or type can depend on inputs (arguments) or arbitrary associated data on the parent type.
+- Authorization decision for each annotated field or type can depend on *inputs (arguments)* or *arbitrary associated data on the parent type*.
   - Enables fine-grained authorization, for each set of arguments, and each instance type / field / entity
 #pause
-- Takes authorization into account for subgraph requests:
+- Integrated in the *query planner*
   - Avoids requesting what the current client request is not authorized to see
   - Potentially requests extra fields that are not needed to resolve the GraphQL query, but are required to make authorization decisions.
 #pause
-- All these authorization decisions are batched by the query planner. If you have to call external services to authorize, these calls can be batched as well.
+- All these decisions *batched* by the query planner.
 #pause
-- Enables fine grained Attribute-based Access Control (ABAC) and Relation-based Access Control (ReBAC).
+- Enables *fine grained Attribute-based Access Control (ABAC)* and *Relation-based Access Control (ReBAC)*.
 
 == Also
 
