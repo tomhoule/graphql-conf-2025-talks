@@ -210,7 +210,7 @@ Data returned to the client:
 == The problems with Federated Subscriptions
 
 #text(size: 16pt)[
-- Lack of transport standardisation has led to fragmentation:
+- Lack of transport standardisation has led to *fragmentation*:
   #pause
   - WebSockets (HTTP/1.1)
     - Subprotocols with protocol negotiation
@@ -219,12 +219,11 @@ Data returned to the client:
       Sec-WebSocket-Protocol: graphql-ws, graphql-transport-ws
       ```
       #pause
-    - Init payloads are not headers
     // you have to think about just like header forwarding, but separate, and more complicated with the mappings
       #pause
-  - SSE (HTTP/2 and 3)
+  - SSE (HTTP/2 and 3)#pause
   - Multipart#pause
-- One connection between the Gateway and the relevant subgraph per subscribed client, even when they all subscribe to the same events#pause
+- *Resource consumption*: one connection between the Gateway and the relevant subgraph per subscribed client, even when they all subscribe to the same events#pause
 - Multi-protocol subscriptions
 ]
 
@@ -234,7 +233,7 @@ Data returned to the client:
 
 #pause
 
-- At each step, one of
+- In the gateway, translations between:
   - SSE,
   - WebSockets
     - `subscriptions-transport-ws`
@@ -259,69 +258,68 @@ Data returned to the client:
 - The idea: the GraphQL federation gateway connects to a message queue (Kafka, NATS, ...), not the subgraphs directly
   - The subgraphs or other services post messages to that queue
 - Two implementations
-  - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[EDFS]
+  - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs")[Cosmo EDFS]
   - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
 
-== EDFS
+// == EDFS
 
-#block[
-#set text(size: 13pt)
-#columns(2)[
+// #block[
+// #set text(size: 13pt)
+// #columns(2)[
 
-```graphql
-input edfs__NatsStreamConfiguration {
-    consumerInactiveThreshold: Int! = 30
-    consumerName: String!
-    streamName: String!
-}
+// ```graphql
+// input edfs__NatsStreamConfiguration {
+//     consumerInactiveThreshold: Int! = 30
+//     consumerName: String!
+//     streamName: String!
+// }
 
-type PublishEventResult {
-    success: Boolean!
-}
+// type PublishEventResult {
+//     success: Boolean!
+// }
 
-type Query {
-    employeeFromEvent(id: ID!): Employee! @edfs__natsRequest(subject: "getEmployee.{{ args.id }}")
-}
+// type Query {
+//     employeeFromEvent(id: ID!): Employee! @edfs__natsRequest(subject: "getEmployee.{{ args.id }}")
+// }
 
-input UpdateEmployeeInput {
-    name: String
-    email: String
-}
+// input UpdateEmployeeInput {
+//     name: String
+//     email: String
+// }
 
-type Mutation {
-    updateEmployee(id: ID!, update: UpdateEmployeeInput!): PublishEventResult! @edfs__natsPublish(subject: "updateEmployee.{{ args.id }}")
-}
+// type Mutation {
+//     updateEmployee(id: ID!, update: UpdateEmployeeInput!): PublishEventResult! @edfs__natsPublish(subject: "updateEmployee.{{ args.id }}")
+// }
 
-type Subscription {
-    employeeUpdated(employeeID: ID!): Employee! @edfs__natsSubscribe(subjects: ["employeeUpdated.{{ args.employeeID }}"])
-}
+// type Subscription {
+//     employeeUpdated(employeeID: ID!): Employee! @edfs__natsSubscribe(subjects: ["employeeUpdated.{{ args.employeeID }}"])
+// }
 
-type Employee @key(fields: "id", resolvable: false) {
-  id: Int! @external
-}
-```
-]
-]
+// type Employee @key(fields: "id", resolvable: false) {
+//   id: Int! @external
+// }
+// ```
+// ]
+// ]
 
 == Grafbase Extensions
 
 - Pluggable gateway extensions compiled to WebAssembly (WASI preview 2)
-  - They can define their own directives that will be used by the Gateway for query planning
+  - Define their own directives that will be used by the Gateway for query planning
   - Near-native performance, in-process secure sandbox.
-  - They can perform arbitrary IO (but you can restrict that with permissions).
-  - You use the open source extensions on the Grafbase Marketplace or build your own
+  - Can perform arbitrary IO (but you can restrict that with permissions).
+  - Open source extensions from the Grafbase Marketplace or build your own
   - They can act as *virtual subgraphs*
 
 ==
 
-#columns(2)[
   #text(size: 12pt)[
 
 ```graphql
 extend schema
   @link(
     url: "https://specs.grafbase.com/composite-schemas/v1"
-    import: ["@lookup", "@key", "@derive"]
+    import: ["@key", "@derive"]
   )
   @link(
     url: "https://extensions.grafbase.com/extensions/nats/0.4.1"
@@ -352,14 +350,13 @@ type ProductSale {
 
 type Subscription {
   sales(subject: String!): ProductSale
-  @natsSubscription(
-    subject: "{{ args.subject }}"
-    selection: "select(.price > 10)"
-  )
+    @natsSubscription(
+      subject: "{{ args.subject }}"
+      selection: "select(.price > 10)"
+    )
 }
 
 ```
-  ]
 ]
 
 == Corresponding configuration
@@ -375,9 +372,8 @@ servers = ["nats://localhost:4222"]
 == Advantages of an extensions-based approach compared to EDFS
 
 - Arbitrary data formats for the messages (not only JSON)
-- Customizable and extensible without touching the Gateway. You can write extensions for other pub/sub systems (Kinesis, etc.).
+- Customizable and extensible without forking the Gateway. You can write extensions for other pub/sub systems (Kinesis, etc.).
 - More powerful filters (`jq` expression language)
-- By convention, configuration is usually in your Gateway configuration, not expressed in your subgraph's GraphQL schemas
 
 == Takeaways
 
@@ -388,15 +384,15 @@ servers = ["nats://localhost:4222"]
 #pause
 
 - Pros of traditional federated subscriptions
-  - Federate existing GraphQL subgraphs, no need to modify them
-  - Subscription fields are managed directly in your subgraphs, next to your other logic
+  - *Reuse*: federate existing GraphQL subgraphs, no need to modify them
+  - *Control*: subscription fields are managed directly in your own GraphQL subgraph
 
 #pause
 
 - Pros of subscriptions offloaded to a message queue
   - Stream deduplication
   - Non-GraphQL services can publish to subjects directly
-  - Depends on setup, but usually higher performance with less memory usage
+  - Usually *higher performance*, lower memory footprint
 
 #pause
 
