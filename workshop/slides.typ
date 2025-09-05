@@ -29,10 +29,15 @@
   ),
   config-common(
     preamble: {
-      codly(languages: codly-languages, zebra-fill: none, display-name: false)
+      codly(languages: codly-languages, zebra-fill: none)
     }
   )
 )
+
+#show link: body => {
+  set text(blue)
+  underline(body)
+}
 
 #set text(size: 19pt, font: ("Inter"))
 
@@ -163,16 +168,21 @@ type Product {
 
 == Composite schemas differences: `@require`
 
-More complicated example:
-
+#columns(2)[#text(size: 15.2pt)[
 ```graphql
 type Product {
   id: ID!
+  dimension: ProductDimension @external
   delivery(
     zip: String!
     dimension: ProductDimensionInput!
       @require(
-        field: "{ productSize: dimension.size, productWeight: dimension.weight }"
+        field: """
+          {
+            productSize: dimension.size,
+            productWeight: dimension.weight
+          }
+        """
       )
   ): DeliveryEstimates
 }
@@ -187,7 +197,7 @@ input ProductDimensionInput {
   productWeight: Int!
 }
 ```
-
+]]
 
 == Links
 
@@ -197,3 +207,9 @@ input ProductDimensionInput {
 - #link("https://github.com/grafbase/extensions")[Open source extensions repo]
 - #link("https://grafbase.com/docs/gateway/extensions")[Grafbase Extensions docs]
   - #link("https://grafbase.com/docs/gateway/extensions/specs/grafbase-spec/v1.0")[Importable types]
+
+== Hands-on workshop
+
+#align(center + horizon)[
+  #image("1140-puppies-playing-with-toys.jpg", width: 80%)
+]

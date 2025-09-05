@@ -33,6 +33,11 @@
   )
 )
 
+#show link: body => {
+  set text(blue)
+  underline(body)
+}
+
 #set text(size: 19pt, font: ("Inter"))
 
 #title-slide[
