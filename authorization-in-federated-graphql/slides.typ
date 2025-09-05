@@ -75,6 +75,8 @@
 #pause
 - Whole request context
 #pause
+- Single point of enforcement
+#pause
 - Entity resolvers make subgraphs lose context
 
 == Entity resolvers make subgraphs lose context
@@ -121,7 +123,7 @@
 
 #pause
 
-- They work with _claims_
+- Based on _claims_ aka _scopes_
 - Claims are derived from:
   - JWT claims
   - Coprocessors
@@ -137,7 +139,7 @@ directive @authenticated on
   | ENUM
 ```
 
-Allows accessing the field or type when the request carries _any_ accepted JWT.
+Allows accessing the field or type when the request carries _any_ verified JWT.
 
 == Federation v2 Standard Directives
 
@@ -185,14 +187,12 @@ type Query {
 
 == Limitations
 
-- The directives above are sufficient to enable RBAC and limited ABAC. Scopes can match roles, or more targeted permissions.
-
+- The directives above are sufficient to enable *RBAC* and *limited ABAC*
 #pause
 
 - But decisions cannot be tied to *data*
   - Inputs to the fields
   - Output data returned by the subgraphs
-
 #pause
 
 - -> *Relationships* cannot be enforced
@@ -200,47 +200,51 @@ type Query {
   - “I can see the balance on my own bank account”
   - “I can see the medical records of my own patients”
 
-  == Comprehensive authorization in the Gateway
+== Comprehensive authorization in the Gateway
 
-  #pause
+#pause
 
-  - We want to make authorization decisions based on:
-    - Request data
-    ```graphql
-    query {
-        user(id: "user_015f91b8-eb7a-418a-8193-f72ddea5760d") {
-            socialSecurityNumber
-        }
-    }
-    ```
+- We want to make authorization decisions based on:
+  - Request data
+  ```graphql
+  query {
+      user(id: "user_015f91b8-eb7a-418a-8193-f72ddea5760d") {
+          socialSecurityNumber
+      }
+  }
+  ```
 
-  #pause
+#pause
 
-    - And response data too
+  - And response data too
 
-  #pause
+#pause
 
-    - *-> Authorization must be taken into account by the query planner*
+  - *-> Authorization must be taken into account by the query planner*
 
 
 == Example
 
+#box(width: 33%)[
+#text(size: 12pt)[
 ```graphql
-query PostsWithComments {
-    posts(user: $user) {
-        title
-        comments(includeHidden: true) {
-            author { name }
-            commentText
-            createdAt
-        }
+query PostsWithComments(
+    $userID: ID!
+) {
+  posts(user: $userID) {
+    title
+    comments(includeHidden: true) {
+      author { name }
+      commentText
+      createdAt
     }
+  }
 }
 ```
-
-==
-
-#text(size: 20pt)[
+]
+]
+#box(width: 66%)[
+#text(size: 13pt)[
 #align(center)[
 #diagram(
   {
@@ -250,7 +254,7 @@ query PostsWithComments {
     node((4.5, 1), "Posts\nsubgraph", name: <subgraph_a>, inset: 10pt, outset: 5pt, stroke: 1pt)
     node((4.5, 3), "Comments\nsubgraph", name: <subgraph_b>, inset: 10pt, outset: 10pt, stroke: 1pt)
     edge(<client_a>, <gateway>, "->", label-size: label_size, label: "1 (request)", bend: 10deg, label-pos: 55%)
-    edge(<gateway>, <subgraph_a>, "->", label-size: label_size, label: "2 (get posts)", bend: 10deg, label-pos: 20%)
+    edge(<gateway>, <subgraph_a>, "->", label-size: label_size, label: "2 (get posts)", bend: 10deg, label-pos: 13%)
     edge(<subgraph_a>, <gateway>, label-size: label_size, label: "3", "->", bend: +20deg, label-pos: 30%)
     edge(<gateway>, <subgraph_b>, "->", label-size: label_size, label: "4 (get comments)", label-pos: 70%, bend: 10deg)
     edge(<subgraph_b>, <gateway>, "->", label-size: label_size, label: "5", bend: 10deg)
@@ -261,10 +265,11 @@ query PostsWithComments {
 )
 ]
 ]
+]
 
-== Pre-subgraph request authorization: extensions
+== Our solution
 
-- Achieved with _extensions_.
+- Achieved with *extensions*.
   - They can define their own directives that will be used by the Gateway for query planning.
   - Compiled to Wasm (WASI preview 2).
     - Near-native performance, in-process secure sandbox.
@@ -322,10 +327,9 @@ fn authorize_query(
             unreachable!()
         };
         match (field.parent_type_name(), field.name()) {
-            ("Query", "user") => {
-                let protect: Authorized<BankAccountByUserEmailArguments> = element.directive_arguments()?;
-                let user_id = protect.arguments.email;
-                if user_id != "george@pizzahut.com" {
+            ("Query", "bankAccountByUserEmail") => {
+                let authorized: Authorized<BankAccountByUserEmailArguments> = element.directive_arguments()?;
+                if authorized.arguments.email != "george@pizzahut.com" {
                     builder.deny(element, "Access denied");
                 }
             }
@@ -345,7 +349,7 @@ fn authorize_query(
 - Will cause the field to become null, with your authorization error in `errors`
 - The field and its subfields will not even be requested from the subgraph
 
-== Response authorization: take 1
+== Response authorization
 
 ```graphql
 type User @key(fields: "id") {
@@ -360,7 +364,7 @@ type User @key(fields: "id") {
 
 Assume we need the `id` and `userType` of the user in addition to the current request context to control access to the social security number.
 
-== Response authorization: take 1
+== Response authorization: Problem
 
 Looks good, but...
 
@@ -374,7 +378,7 @@ query {
 
 The `id` and `userType` fields are not going to be available, so our plugin / coprocessor does not have the data it needs to make authorization decisions.
 
-== Response authorization: take 2
+== Response authorization: Solution
 
 We define a directive that declaratively pulls in the fields we need in order to make a decision:
 
@@ -387,7 +391,7 @@ extend schema
 directive @guard(requires: FieldSet!)
 ```
 
-== Response authorization: take 2
+== Response authorization: Solution
 
 Then we apply it:
 
@@ -412,8 +416,7 @@ type User @key(fields: "id") {
 
 == Takeaways
 
-- Authorization decision for each annotated field or type can depend on *inputs (arguments)* or *arbitrary associated data on the parent type*.
-  - Enables fine-grained authorization, for each set of arguments, and each instance type / field / entity
+- Authorization decision for each annotated field or type can depend on *inputs (arguments)* or *arbitrary associated data*.
 #pause
 - Integrated in the *query planner*
   - Avoids requesting what the current client request is not authorized to see
