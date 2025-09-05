@@ -124,6 +124,8 @@
 - Authorization
 #pause
 - Schema contracts
+#pause
+- Hooks
 
 == Composite Schemas
 
