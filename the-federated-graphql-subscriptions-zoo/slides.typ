@@ -75,29 +75,25 @@
 
 == Subscriptions are special... in GraphQL
 
-#quote(attribution: link("https://spec.graphql.org/draft/#sel-GAFTJFABOBjDywM")[GraphQL spec (draft)])[
-   a long-lived request that fetches data in response to a sequence of events over time
+#quote(attribution: link("https://spec.graphql.org/September2025/#sel-GAFTJFABRBb-lZ")[GraphQL spec (Sept 2025)])[
+   subscription — a long-lived request that fetches data in response to a sequence of events over time
 ]
 
 #pause
 
-#quote(attribution: link("https://spec.graphql.org/draft/#sec-Type-Name-Introspection")[GraphQL spec (draft)])[
+#quote(attribution: link("https://spec.graphql.org/September2025/#sec-Type-Name-Introspection")[GraphQL spec (Sept 2025)])[
   GraphQL supports type name introspection within any selection set in an operation, with the single exception of selections at the root of a subscription operation.
 ]
 
 == Subscriptions are special... in GraphQL
 
-#pause
-
-#quote(attribution: link("https://spec.graphql.org/draft/#sel-HALPJDDHBCBJ4uR")[GraphQL spec (draft)])[
+#quote(attribution: link("https://spec.graphql.org/September2025/#sel-IALPJDFDABiBB4Bwzc")[GraphQL spec (Sept 2025)])[
   Subscription operations must have exactly one root field.
 
   To enable us to determine this without access to runtime variables, we must forbid the \@skip and \@include directives in the root selection set.
 ]
 
-#pause
-
-#quote(attribution: link("https://spec.graphql.org/draft/#note-80ec0")[GraphQL spec (draft)])[
+#quote(attribution: link("https://spec.graphql.org/September2025/#sel-IALPJDFbCBBBKsiQ")[GraphQL spec (Sept 2025)])[
    While each subscription must have exactly one root field, a document may contain any number of operations, each of which may contain different root fields. When executed, a document containing multiple subscription operations must provide the operation name as described in GetOperation().
 ]
 

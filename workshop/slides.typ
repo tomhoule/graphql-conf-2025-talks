@@ -211,5 +211,5 @@ input ProductDimensionInput {
 == Hands-on workshop
 
 #align(center + horizon)[
-  #image("1140-puppies-playing-with-toys.jpg", width: 80%)
+  #image("hands-on.jpg", width: 60%)
 ]
