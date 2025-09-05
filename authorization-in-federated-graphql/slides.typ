@@ -199,6 +199,7 @@ type Query {
   - “Users can see the photos on the profile of their friends”
   - “I can see the balance on my own bank account”
   - “I can see the medical records of my own patients”
+  - “My direct manager can approve my expense requests if they are < 5000€”
 
 == Comprehensive authorization in the Gateway
 
@@ -440,9 +441,10 @@ Grote Zaal - 2nd Floor. #pause 10:45am.
 #absolute-place(dx: 30%, dy: 70%, figure(image("../grafbase-logo.svg", width: 50%)))
 ]
 
-= Appendices
-
 == Links
 
-- #link("https://grafbase.com/blog/custom-authentication-and-authorization-in-graphql-federation")[Blog post: Custom Authentication and Authorization in GraphQL Federation]
-- #link("https://github.com/grafbase/grafbase/tree/main/examples/authorization")[Example project for authorization extensions]
+- #link("https://www.permit.io/blog/what-is-fine-grained-authorization-fga")[Blog post on fine-grained authorization by Permit.io]
+- #link("https://www.apollographql.com/docs/graphos/routing/security/authorization")[Docs on built-in]
+- Grafbase Authorization extensions:
+  - #link("https://grafbase.com/blog/custom-authentication-and-authorization-in-graphql-federation")[Grafbase blog post: Custom Authentication and Authorization in GraphQL Federation]
+  - #link("https://github.com/grafbase/grafbase/tree/main/examples/authorization")[Example project for authorization extensions]

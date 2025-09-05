@@ -191,8 +191,9 @@ input ProductDimensionInput {
 
 == Links
 
-- Composite Schemas meeting videos on the GraphQL Foundation's YouTube channel
-- Composite Schemas spec (draft)
-- Grafbase Extensions docs
-- Grafbase SDK
-- Open source extensions repo
+- #link("https://graphql.github.io/composite-schemas-spec/draft/")[Composite Schemas spec (draft)]
+- #link("https://www.youtube.com/@GraphQLFoundation/videos")[Composite Schemas WG meeting videos on the GraphQL Foundation Working Groups YouTube channel]
+- #link("https://docs.rs/grafbase-sdk/0.22.3/grafbase_sdk/")[Grafbase SDK]
+- #link("https://github.com/grafbase/extensions")[Open source extensions repo]
+- #link("https://grafbase.com/docs/gateway/extensions")[Grafbase Extensions docs]
+  - #link("https://grafbase.com/docs/gateway/extensions/specs/grafbase-spec/v1.0")[Importable types]
