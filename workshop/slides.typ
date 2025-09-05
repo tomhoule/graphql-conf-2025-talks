@@ -101,8 +101,93 @@
 )
 ]
 
+== Grafbase Extensions
+
+- Wasm modules
+#pause
+- Rust SDK
+#pause
+- Open source extensions, or locally built
+
+== Types of extensions
+
+#pause
+- Resolvers
+#pause
+- Authentication
+#pause
+- Authorization
+#pause
+- Schema contracts
 
 == Composite Schemas
+
+- WIP
+- Evolution of the Apollo Federation spec
+- Collaborative effort in a GraphQL Foundation working group
+- Smooth transition path
+
+== Composite schemas differences: `@lookup`
+
+Replaces *entity resolvers*.
+
+```graphql
+
+type Query {
+  version: Int
+  productById(id: ID!): Product @lookup
+  productByName(name: String!): Product @lookup
+}
+
+type Product {
+  id: ID!
+  name: String!
+}
+
+```
+
+== Composite schemas differences: `@requires`
+
+`@requires` on fields becomes `@require` on arguments.
+
+```graphql
+type Product {
+  id: ID!
+  weight: Int!
+  delivery(
+    zip: String!
+    weight: Int! @require(field: "weight")
+  ): DeliveryEstimates
+}
+```
+
+== Composite schemas differences: `@require`
+
+More complicated example:
+
+```graphql
+type Product {
+  id: ID!
+  delivery(
+    zip: String!
+    dimension: ProductDimensionInput!
+      @require(
+        field: "{ productSize: dimension.size, productWeight: dimension.weight }"
+      )
+  ): DeliveryEstimates
+}
+
+type ProductDimension {
+  size: Int!
+  weight: Int!
+}
+
+input ProductDimensionInput {
+  productSize: Int!
+  productWeight: Int!
+}
+```
+
 
 == Links
 
@@ -110,3 +195,4 @@
 - Composite Schemas spec (draft)
 - Grafbase Extensions docs
 - Grafbase SDK
+- Open source extensions repo
