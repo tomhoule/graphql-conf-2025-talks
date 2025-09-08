@@ -215,3 +215,22 @@ input ProductDimensionInput {
 #align(center + horizon)[
   #image("hands-on.jpg", width: 60%)
 ]
+
+== Workshop links
+
+#box(width: 63%)[
+#v(1em)
+- ➡️ *#link("https://github.com/grafbase/federation-demo")*
+#v(1em)
+- CLI: #link("https://grafbase.com/docs/cli/installation") \
+  or `curl -fsSL https://grafbase.com/downloads/cli | bash`
+- Gateway: #link("https://grafbase.com/docs/gateway/installation") \
+  or `curl -fsSL https://grafbase.com/downloads/gateway | bash`
+- #link("https://grafbase.com/docs/gateway/mcp")[MCP]
+- #link("https://grafbase.com/docs/gateway/extensions")[Extensions docs]
+
+]
+
+#absolute-place(dx: 70%, dy: 28%,
+  image("./qrcode_slides.png", width: 28%)
+)
