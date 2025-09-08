@@ -415,9 +415,9 @@ Grote Zaal - 2nd Floor. #pause 10:45am.
 #absolute-place(dx: 30%, dy: 70%, figure(image("../grafbase-logo.svg", width: 50%)))
 ]
 
-= Appendices
-
 == Links
+
+#box(width: 90%)[
 
 - WebSockets
   - #link("https://github.com/apollographql/subscriptions-transport-ws")[subscriptions-transport-ws]
@@ -430,3 +430,8 @@ Grote Zaal - 2nd Floor. #pause 10:45am.
 - #link("https://grafbase.com/docs/extensions")[Grafbase extensions]
 - #link("https://cosmo-docs.wundergraph.com/router/event-driven-federated-subscriptions-edfs#the-%E2%80%9Csubjects%E2%80%9D-argument")[Cosmo EDFS]
 - #link("https://www.youtube.com/watch?v=NfuiB52K7X8")[Pen Pineapple Apple Pen]
+]
+
+#absolute-place(dx: 70%, dy: 45%,
+  image("./qrcode_slides.png", width: 28%)
+)

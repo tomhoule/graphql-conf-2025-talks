@@ -449,8 +449,16 @@ Grote Zaal - 2nd Floor. #pause 10:45am.
 
 == Links
 
+#box(width: 63%)[
+#v(1.6em)
+
 - #link("https://www.permit.io/blog/what-is-fine-grained-authorization-fga")[Blog post on fine-grained authorization by Permit.io]
 - #link("https://www.apollographql.com/docs/graphos/routing/security/authorization")[Docs on Apollo Federation v2 built-in authorization directives]
 - Grafbase Authorization extensions:
   - #link("https://grafbase.com/blog/custom-authentication-and-authorization-in-graphql-federation")[Grafbase blog post: Custom Authentication and Authorization in GraphQL Federation]
   - #link("https://github.com/grafbase/grafbase/tree/main/examples/authorization")[Example project for authorization extensions]
+]
+
+#absolute-place(dx: 70%, dy: 28%,
+  image("./qrcode_slides.png", width: 28%)
+)
