@@ -250,7 +250,7 @@ query PostsWithComments(
 ]
 ]
 #box(width: 66%)[
-#text(size: 13pt)[
+#text(size: 15pt)[
 #align(center)[
 #diagram(
   {
@@ -292,7 +292,7 @@ extend schema
 directive @authorized(arguments: InputFieldSet = "*")
 ```
 
-== Pre-subgraph request authorization: apply the directive
+== Authorization on input data: apply the directive
 
 ```graphql
 extend schema
@@ -305,7 +305,7 @@ type Query {
 }
 ```
 
-== Pre-subgraph request authorization: implement authzn logic
+== Authorization on input data: implement authzn logic
 
 #text(size: 14pt)[
 
@@ -349,7 +349,7 @@ fn authorize_query(
 ]
 
 
-== Pre-subgraph request authorization
+== Authorization on output data
 
 - Takes place when a subgraph request is planned
 - Will cause the field to become null, with your authorization error in `errors`
@@ -363,7 +363,7 @@ type User @key(fields: "id") {
   email: String!
   userType: UserType
   socialSecurityNumber: String @policy(
-    policies: ["check_access_to_user_ssn"]
+    policies: [["check_access_to_user_ssn"]]
   )
 }
 ```
@@ -425,6 +425,7 @@ type User @key(fields: "id") {
 - Authorization decision for each annotated field or type can depend on *inputs (arguments)* or *arbitrary associated data*.
 #pause
 - Integrated in the *query planner*
+  - It's a requirement
   - Avoids requesting what the current client request is not authorized to see
   - Potentially requests extra fields that are not needed to resolve the GraphQL query, but are required to make authorization decisions.
 #pause
