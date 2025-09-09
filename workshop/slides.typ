@@ -201,7 +201,7 @@ input ProductDimensionInput {
 ```
 ]]
 
-== Links
+== Links (1)
 
 - #link("https://graphql.github.io/composite-schemas-spec/draft/")[Composite Schemas spec (draft)]
 - #link("https://www.youtube.com/@GraphQLFoundation/videos")[Composite Schemas WG meeting videos on the GraphQL Foundation Working Groups YouTube channel]
@@ -209,6 +209,17 @@ input ProductDimensionInput {
 - #link("https://github.com/grafbase/extensions")[Open source extensions repo]
 - #link("https://grafbase.com/docs/gateway/extensions")[Grafbase Extensions docs]
   - #link("https://grafbase.com/docs/gateway/extensions/specs/grafbase-spec/v1.0")[Importable types]
+
+== Links (2)
+
+- #link("https://grafbase.com/blog/seamless-grpc-subgraphs-with-extensions-and-composite-schemas")[gRPC + composite schemas blog post]
+- #link("https://grafbase.com/blog/beyond-apollo-federation-how-to-use-composite-schemas-and-extensions-to-integrate-non-graphql-data-sources")[Composite Schemas blog post]
+- #link("https://grafbase.com/changelog/announcing-schema-contracts")[Schema contracts announcement blog post]
+- #link("https://grafbase.com/blog/seamless-grpc-subgraphs-with-extensions-and-composite-schemas")[gRPC extension announcement blog post]
+- #link("https://grafbase.com/changelog/federated-graphql-apis-with-kafka")[Kafka extension announcement blog post]
+- #link("https://grafbase.com/changelog/federated-graphql-apis-with-postgres")[Postgres extension announcement blog post]
+- #link("https://grafbase.com/blog/how-commercetools-uses-grafbase-to-support-multi-tenancy-feature-flagging-and-ai-innovation")[Commercetools case study with how they use hooks and schema contract extensions]
+- #link("https://grafbase.com/blog/how-commercetools-uses-grafbase-to-support-multi-tenancy-feature-flagging-and-ai-innovation")[Pantheon case study. They also use extensions.]
 
 == Hands-on workshop
 
